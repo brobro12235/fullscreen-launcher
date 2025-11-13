@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Fullscreen RetroBowl</title>
+</head>
+<body>
+<script>
+const url = "retrobowl.html"; // your game file
+let win = window.open('about:blank', '_blank');
+win.document.body.style.margin='0';
+win.document.body.style.height='100vh';
+const iframe = win.document.createElement('iframe');
+iframe.src = url;
+iframe.style.width='100%';
+iframe.style.height='100%';
+iframe.style.border='none';
+win.document.body.appendChild(iframe);
+</script>
+</body>
+</html>
