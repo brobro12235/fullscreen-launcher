@@ -6,15 +6,15 @@
 </head>
 <body>
 <script>
-const url = "https://brobro12235.github.io/fullscreen-launcher/allgames.html"; // full URL to the game
+const url = "https://brobro12235.github.io/fullscreen-launcher/allgames.html"; // full URL to your game
 let win = window.open('about:blank', '_blank'); // opens true about:blank
-win.document.body.style.margin='0';
-win.document.body.style.height='100vh';
+win.document.body.style.margin = '0';
+win.document.body.style.height = '100vh';
 const iframe = win.document.createElement('iframe');
 iframe.src = url;
-iframe.style.width='100%';
-iframe.style.height='100%';
-iframe.style.border='none';
+iframe.style.width = '100%';
+iframe.style.height = '100%';
+iframe.style.border = 'none';
 win.document.body.appendChild(iframe);
 </script>
 </body>
