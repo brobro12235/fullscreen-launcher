@@ -1,52 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Retro Bowl Launcher</title>
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #000;
-  }
-  .button {
-    padding: 20px 35px;
-    background: #4a148c;
-    color: white;
-    font-size: 26px;
-    font-family: Arial, sans-serif;
-    cursor: pointer;
-    border-radius: 12px;
-    text-decoration: none;
-  }
-  .button:hover {
-    opacity: 0.8;
-  }
-</style>
-</head>
+<html>
 <body>
-
-<a class="button" onclick="launch()">Launch Retro Bowl</a>
-
 <script>
-const GAME_URL = "retrobowl.html"; // <-- your REAL game file
-
-function launch() {
-  fetch(GAME_URL + "?t=" + Date.now())
+(function(){
+  fetch("retrobowl.html?t=" + Date.now())
     .then(r => r.text())
     .then(html => {
       const win = window.open("about:blank", "_blank");
+      if (!win) {
+        alert("Popup blocked! Allow popups for this site.");
+        return;
+      }
       win.document.open();
       win.document.write(html);
       win.document.close();
-    })
-    .catch(err => console.error(err));
-}
+    });
+})();
 </script>
-
 </body>
 </html>
