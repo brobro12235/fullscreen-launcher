@@ -1,56 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-    }
-
-    .button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100vw;
-      height: 100vh;
-      background-color: #000000;
-      color: #ffffff !important;
-      font-family: Arial, sans-serif;
-      font-size: 24px;
-      font-weight: bold;
-      cursor: pointer;
-      text-decoration: none !important;
-      transition: background-color 0.3s, transform 0.2s;
-    }
-
-    .button:hover {
-      background-color: #4a148c !important;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Retro Bowl Launcher</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+  }
+  .button {
+    padding: 20px 35px;
+    background: #4a148c;
+    color: white;
+    font-size: 26px;
+    font-family: Arial, sans-serif;
+    cursor: pointer;
+    border-radius: 12px;
+    text-decoration: none;
+  }
+  .button:hover {
+    opacity: 0.8;
+  }
+</style>
 </head>
 <body>
-  <a id="button" class="button">Launch RetroBowl</a>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const button = document.getElementById('button');
-      button.addEventListener('click', launch);
-    });
 
-    function launch() {
-      fetch("https://cdn.jsdelivr.net/gh/brobro12235/fullscreen-launcher@main/retrobowl.html?t=" + Date.now())
-        .then(response => response.text())
-        .then(text => {
-          const newWin = window.open("about:blank", "_blank");
-          if (newWin) {
-            newWin.document.open();
-            newWin.document.write(text);
-            newWin.document.close();
-          }
-        });
-    }
-  </script>
+<a class="button" onclick="launch()">Launch Retro Bowl</a>
+
+<script>
+const GAME_URL = "retrobowl.html"; // <-- your REAL game file
+
+function launch() {
+  fetch(GAME_URL + "?t=" + Date.now())
+    .then(r => r.text())
+    .then(html => {
+      const win = window.open("about:blank", "_blank");
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+    })
+    .catch(err => console.error(err));
+}
+</script>
+
 </body>
 </html>
