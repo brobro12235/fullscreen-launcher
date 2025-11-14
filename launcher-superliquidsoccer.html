@@ -1,1 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Super Liquid Soccer Launcher</title>
+<style>
+html, body { margin:0; padding:0; height:100%; display:flex; justify-content:center; align-items:center; background:#000; }
+.button { padding:20px 35px; background:#4a148c; color:white; font-size:26px; font-family:Arial,sans-serif; cursor:pointer; border-radius:12px; text-decoration:none; }
+.button:hover { opacity:0.8; }
+</style>
+</head>
+<body>
+<a class="button" id="launchBtn">Play Super Liquid Soccer (Fullscreen)</a>
+<script>
+document.getElementById('launchBtn').addEventListener('click', function() {
+  fetch("https://cdn.jsdelivr.net/gh/brobro12235/fullscreen-launcher@main/superliquidsoccer.html?t=" + Date.now())
+    .then(r => r.text())
+    .then(html => {
+      const win = window.open("about:blank","_blank");
+      if(!win){alert("Popup blocked! Allow popups."); return;}
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+    }).catch(err => console.error(err));
+});
+</script>
+</body>
+</html>
 
