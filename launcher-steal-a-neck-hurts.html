@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Steal a Neck Hurts Launcher</title>
-<style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background-color: #111;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  }
-  button {
-    padding: 20px 40px;
-    font-size: 20px;
-    cursor: pointer;
-    border: none;
-    border-radius: 8px;
-    background-color: #274e13;
-    color: #fff;
-    transition: 0.2s;
-  }
-  button:hover {
-    background-color: #6aa84f;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Steal a Neck Hurts Launcher</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+    }
+    .button {
+      background: #4a148c;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 24px;
+      font-weight: bold;
+      padding: 20px 40px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    .button:hover {
+      background-color: #7b1fa2;
+    }
+  </style>
 </head>
 <body>
-<button onclick="launchGame()">Play Steal a Neck Hurts Fullscreen</button>
+
+<button class="button" id="launchBtn">Play Steal a Neck Hurts Fullscreen</button>
 
 <script>
-function launchGame() {
-  const win = window.open('about:blank', '_blank');
+document.getElementById('launchBtn').addEventListener('click', () => {
+  const target = "https://cdn.jsdelivr.net/gh/brobro12235/fullscreen-launcher@main/steal-a-neck-hurts.html";
+  const win = window.open("about:blank", "_blank");
   if (!win) {
-    alert('Popup blocked! Please allow popups.');
+    alert("Popup blocked! Please allow popups for this site.");
     return;
   }
-  win.document.body.style.margin = '0';
-  win.document.body.style.height = '100vh';
-  const iframe = win.document.createElement('iframe');
-  iframe.src = 'steal-a-neck-hurts.html';
-  iframe.style.border = 'none';
-  iframe.style.width = '100%';
-  iframe.style.height = '100%';
-  win.document.body.appendChild(iframe);
-}
+  win.document.open();
+  win.document.write(`
+    <!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+    <body style="margin:0;overflow:hidden">
+      <iframe src="${target}" style="border:none;width:100vw;height:100vh;"></iframe>
+    </body></html>
+  `);
+  win.document.close();
+});
 </script>
+
 </body>
 </html>
