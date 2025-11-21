@@ -1,1 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Retro Bowl College Launcher</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    html,body{height:100%;margin:0;background:#000;display:flex;align-items:center;justify-content:center}
+    .btn{background:#6A0DAD;color:#fff;border:0;padding:18px 34px;border-radius:12px;font-size:20px;cursor:pointer;font-family:Arial, sans-serif;box-shadow:0 6px 18px rgba(106,13,173,0.18)}
+    .btn:hover{background:#8a32d9}
+  </style>
+</head>
+<body>
+  <button id="launch" class="btn">▶ Play Retro Bowl College (Fullscreen)</button>
 
+<script>
+document.getElementById('launch').addEventListener('click', function(){
+  // CDN link (use this one or replace with your github-pages URL)
+  const cdnUrl = "https://cdn.jsdelivr.net/gh/FinnBaltazar1111/retro-bowl-college@main/index.html?t=" + Date.now();
+  const win = window.open('about:blank', '_blank');
+  if (!win) { alert('Popup blocked — allow popups for this site and try again.'); return; }
+
+  fetch(cdnUrl).then(r => r.text()).then(html => {
+    win.document.open();
+    // base helps relative paths in the game load correctly
+    win.document.write('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">');
+    win.document.write('<base href="https://cdn.jsdelivr.net/gh/FinnBaltazar1111/retro-bowl-college@main/">');
+    win.document.write('</head><body style="margin:0">');
+    win.document.write(html);
+    win.document.write('</body></html>');
+    win.document.close();
+  }).catch(err => {
+    console.error(err);
+    alert('Failed to load the game. Check console or your network.');
+  });
+});
+</script>
+</body>
+</html>
