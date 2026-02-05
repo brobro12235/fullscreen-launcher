@@ -104,57 +104,6 @@
     <script>
       window.onload = GameMaker_Init;
     </script>
-    <script src="/html/settings/js/index.js"></script>
-    
-    <!-- Save/Load functionality -->
-    <script>
-    setTimeout(function() {
-      const saveDiv = document.createElement('div');
-      saveDiv.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:rgba(0,0,0,0.8);padding:10px;border-radius:8px;';
-      saveDiv.innerHTML = '<button onclick="window.exportSave()" style="padding:8px 12px;margin:5px;background:#4CAF50;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">💾 Download Save</button><button onclick="window.importSave()" style="padding:8px 12px;margin:5px;background:#2196F3;color:white;border:none;border-radius:5px;cursor:pointer;font-size:12px;">📁 Upload Save</button>';
-      document.body.appendChild(saveDiv);
-    }, 2000);
-    
-    window.exportSave = function() {
-      const saveData = {};
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        saveData[key] = localStorage.getItem(key);
-      }
-      const blob = new Blob([JSON.stringify(saveData)], {type: 'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'retrobowl-save.json';
-      a.click();
-      URL.revokeObjectURL(url);
-      alert('Save downloaded! Keep this file to restore your progress later.');
-    };
-    
-    window.importSave = function() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      input.onchange = e => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = event => {
-          try {
-            const saveData = JSON.parse(event.target.result);
-            for (const key in saveData) {
-              localStorage.setItem(key, saveData[key]);
-            }
-            alert('Save loaded successfully! Refreshing...');
-            location.reload();
-          } catch(err) {
-            alert('Error loading save file. Make sure it is a valid Retro Bowl save.');
-          }
-        };
-        reader.readAsText(file);
-      };
-      input.click();
-    };
-    </script>
+  <script src="/html/settings/js/index.js"></script> 
    </body>
 </html>
