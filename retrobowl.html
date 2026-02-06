@@ -108,7 +108,7 @@
     <script src="/html/settings/js/index.js"></script>
     
     <script>
-    const API_KEY = '$2a$10$yAVzmS4UIb1JHWmUxdLDfe9MvR9J6MfFGz108u2ZQEz3SUh/PA43G';
+    const API_KEY = '$2a$10$2EPsIUVI9AsOf.vhB8MA1.FZMR.M0taFmiQIvezh7XOpDJa5IahCq';
     let saveCounter = 0;
     let secondsUntilSave = 30;
     
@@ -212,6 +212,8 @@
             ? `https://api.jsonbin.io/v3/b/${binId}`
             : 'https://api.jsonbin.io/v3/b';
           
+          updateDebug('saveStatus', 'Fetching to JSONBin...', 'status-waiting');
+          
           const response = await fetch(url, {
             method: binId ? 'PUT' : 'POST',
             headers: {
@@ -221,29 +223,41 @@
             body: JSON.stringify(saveData)
           });
           
+          updateDebug('saveStatus', 'Got response: ' + response.status, 'status-waiting');
+          
           if (!response.ok) {
-            updateDebug('saveStatus', '✗ HTTP ' + response.status, 'status-error');
+            const errorText = await response.text();
+            updateDebug('saveStatus', '✗ HTTP ' + response.status + ': ' + errorText.substring(0, 20), 'status-error');
             return;
           }
           
           const data = await response.json();
+          updateDebug('saveStatus', 'Parsing response...', 'status-waiting');
           
-          if (!binId && data.metadata && data.metadata.id) {
-            binId = data.metadata.id;
-            setCookie('retroBowlBinId', binId, 365);
-            updateDebug('binIdStatus', binId.substring(0, 12) + '...', 'status-ok');
-          } else if (!binId) {
-            updateDebug('saveStatus', '✗ No bin ID returned', 'status-error');
-            return;
+          // Log the entire response structure to debug
+          if (!binId) {
+            if (data.metadata && data.metadata.id) {
+              binId = data.metadata.id;
+              setCookie('retroBowlBinId', binId, 365);
+              updateDebug('binIdStatus', binId.substring(0, 12) + '...', 'status-ok');
+            } else if (data.id) {
+              binId = data.id;
+              setCookie('retroBowlBinId', binId, 365);
+              updateDebug('binIdStatus', binId.substring(0, 12) + '...', 'status-ok');
+            } else {
+              updateDebug('saveStatus', '✗ No ID in response', 'status-error');
+              updateDebug('binIdStatus', 'Response: ' + JSON.stringify(data).substring(0, 20), 'status-error');
+              return;
+            }
           }
           
           saveCounter++;
-          secondsUntilSave = 30; // Reset countdown
+          secondsUntilSave = 30;
           updateDebug('saveStatus', '✓ Saved (' + Object.keys(saveData).length + ' keys)', 'status-ok');
           updateDebug('saveCount', saveCounter);
           
         } catch(e) {
-          updateDebug('saveStatus', '✗ ' + e.message.substring(0, 30), 'status-error');
+          updateDebug('saveStatus', '✗ ' + e.message.substring(0, 25), 'status-error');
         }
       } else {
         updateDebug('saveStatus', 'No game data yet', 'status-waiting');
