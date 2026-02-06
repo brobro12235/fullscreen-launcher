@@ -150,7 +150,7 @@
         <input type="text" id="usernameInput" placeholder="Username" maxlength="20" autocomplete="off">
         <input type="password" id="passwordInput" placeholder="Password" maxlength="50" autocomplete="off">
         <button onclick="login()">Login / Create Account</button>
-        <p id="loginMessage">Enter username and password to continue</p>
+        <p id="loginMessage">Your progress saves to the cloud!</p>
       </div>
     </div>
 
@@ -170,36 +170,12 @@
     <script src="/html/settings/js/index.js"></script>
     
     <script>
-    // Cookie helpers to persist across about:blank sessions
-    function setCookie(name, value, days) {
-      const date = new Date();
-      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-      document.cookie = name + "=" + value + ";expires=" + date.toUTCString() + ";path=/;SameSite=None;Secure";
-    }
-
-    function getCookie(name) {
-      const nameEQ = name + "=";
-      const cookies = document.cookie.split(';');
-      for(let i = 0; i < cookies.length; i++) {
-        let cookie = cookies[i].trim();
-        if (cookie.indexOf(nameEQ) === 0) return cookie.substring(nameEQ.length);
-      }
-      return null;
-    }
+    // YOUR BACKEND URL - Replace this after deploying to Vercel!
+    const BACKEND_URL = 'https://retrobowl-backend.vercel.app/api/saves';
     
     let username = '';
     let password = '';
-    let pasteUrl = getCookie('retroBowlPasteUrl') || '';
     let gameStarted = false;
-    
-    // Hash password for security
-    async function hashPassword(pass) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(pass);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
     
     // Show save indicator
     function updateSaveStatus(message, color = '#0f0') {
@@ -253,61 +229,47 @@
       
       username = username.toLowerCase();
       
-      message.textContent = 'Checking for existing save...';
+      message.textContent = 'Loading your save...';
       message.className = 'success';
       
       // Load save data
       setTimeout(loadSaveData, 500);
     }
     
-    // Load save data
+    // Load save data from backend
     async function loadSaveData() {
       try {
         updateSaveStatus('Loading save...', '#ff0');
         
-        const passHash = await hashPassword(password);
+        const response = await fetch(`${BACKEND_URL}?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
         
-        // Try to load from stored paste URL
-        if (pasteUrl) {
-          try {
-            const response = await fetch(pasteUrl + '.txt');
-            if (response.ok) {
-              const text = await response.text();
-              const data = JSON.parse(text);
-              
-              // Verify password matches
-              if (data.passwordHash === passHash && data.username === username) {
-                // Load the save
-                for (const key in data.saveData) {
-                  localStorage.setItem(key, data.saveData[key]);
-                }
-                
-                updateSaveStatus('Save loaded!', '#0f0');
-                document.getElementById('loginScreen').style.display = 'none';
-                startGame();
-                return;
-              } else {
-                // Wrong password or username
-                updateSaveStatus('Wrong password', '#f00');
-                setTimeout(() => {
-                  location.reload();
-                }, 2000);
-                return;
-              }
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.saveData) {
+            // Clear localStorage first
+            localStorage.clear();
+            
+            // Load save data
+            for (const key in data.saveData.saveData) {
+              localStorage.setItem(key, data.saveData.saveData[key]);
             }
-          } catch(e) {
-            console.log('Error loading save:', e);
+            
+            updateSaveStatus('Save loaded!', '#0f0');
+          } else {
+            updateSaveStatus('Starting new game', '#ff0');
           }
+        } else if (response.status === 404) {
+          // No save found - new user
+          updateSaveStatus('Welcome! Starting new game', '#ff0');
+        } else {
+          updateSaveStatus('Load failed, starting new game', '#f00');
         }
-        
-        // No existing save - start new game
-        updateSaveStatus('Starting new game...', '#ff0');
-        
       } catch(e) {
-        console.log('Load error:', e);
-        updateSaveStatus('Starting new game', '#ff0');
+        console.error('Load error:', e);
+        updateSaveStatus('Error loading, starting new game', '#f00');
       }
       
+      // Hide login screen and start game
       document.getElementById('loginScreen').style.display = 'none';
       startGame();
     }
@@ -329,7 +291,7 @@
       }
     }
     
-    // Save to dpaste
+    // Save to backend
     async function saveToCloud() {
       const saveData = {};
       for (let i = 0; i < localStorage.length; i++) {
@@ -341,45 +303,34 @@
         try {
           updateSaveStatus('Saving...', '#ff0');
           
-          const passHash = await hashPassword(password);
-          const saveObject = {
-            username: username,
-            passwordHash: passHash,
-            saveData: saveData,
-            lastSaved: new Date().toISOString()
-          };
-          
-          const pasteContent = JSON.stringify(saveObject, null, 2);
-          
-          // Create dpaste
-          const formData = new FormData();
-          formData.append('content', pasteContent);
-          formData.append('syntax', 'json');
-          formData.append('expiry_days', '365');
-          
-          const response = await fetch('https://dpaste.com/api/', {
+          const response = await fetch(BACKEND_URL, {
             method: 'POST',
-            body: formData
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              username: username,
+              password: password,
+              saveData: saveData
+            })
           });
           
           if (response.ok) {
-            const responseUrl = await response.text();
-            pasteUrl = responseUrl.trim();
-            setCookie('retroBowlPasteUrl', pasteUrl, 365);
-            console.log('Saved to:', pasteUrl);
-            
-            updateSaveStatus('✓ Saved to cloud', '#0f0');
-            setTimeout(() => {
-              updateSaveStatus('User: ' + username, '#0f0');
-            }, 2000);
+            const data = await response.json();
+            if (data.success) {
+              updateSaveStatus('✓ Saved to cloud', '#0f0');
+              setTimeout(() => {
+                updateSaveStatus('User: ' + username, '#0f0');
+              }, 2000);
+            } else {
+              updateSaveStatus('✗ Save failed', '#f00');
+            }
           } else {
-            const errorText = await response.text();
-            console.error('Save failed:', response.status, errorText);
             updateSaveStatus('✗ Save failed: ' + response.status, '#f00');
           }
         } catch(e) {
-          console.log('Save error:', e);
-          updateSaveStatus('✗ Save failed: ' + e.message, '#f00');
+          console.error('Save error:', e);
+          updateSaveStatus('✗ Save failed', '#f00');
         }
       }
     }
