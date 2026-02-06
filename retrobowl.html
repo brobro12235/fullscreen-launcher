@@ -221,12 +221,20 @@
             body: JSON.stringify(saveData)
           });
           
+          if (!response.ok) {
+            updateDebug('saveStatus', '✗ HTTP ' + response.status, 'status-error');
+            return;
+          }
+          
           const data = await response.json();
           
           if (!binId && data.metadata && data.metadata.id) {
             binId = data.metadata.id;
             setCookie('retroBowlBinId', binId, 365);
             updateDebug('binIdStatus', binId.substring(0, 12) + '...', 'status-ok');
+          } else if (!binId) {
+            updateDebug('saveStatus', '✗ No bin ID returned', 'status-error');
+            return;
           }
           
           saveCounter++;
@@ -235,7 +243,7 @@
           updateDebug('saveCount', saveCounter);
           
         } catch(e) {
-          updateDebug('saveStatus', '✗ Failed: ' + e.message, 'status-error');
+          updateDebug('saveStatus', '✗ ' + e.message.substring(0, 30), 'status-error');
         }
       } else {
         updateDebug('saveStatus', 'No game data yet', 'status-waiting');
