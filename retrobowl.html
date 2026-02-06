@@ -58,10 +58,42 @@
         width: 100%;
         height: 100%;
       }
+      
+      /* Debug display */
+      #debugInfo {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #0f0;
+        padding: 10px;
+        font-family: monospace;
+        font-size: 12px;
+        border: 2px solid #0f0;
+        border-radius: 5px;
+        z-index: 9999;
+        max-width: 300px;
+      }
+      #debugInfo div {
+        margin: 3px 0;
+      }
+      .status-ok { color: #0f0; }
+      .status-error { color: #f00; }
+      .status-waiting { color: #ff0; }
     </style>
   </head>
 
   <body>
+    <!-- Debug Info Display -->
+    <div id="debugInfo">
+      <div><strong>SAVE STATUS</strong></div>
+      <div>Player ID: <span id="playerIdStatus">...</span></div>
+      <div>Bin ID: <span id="binIdStatus">...</span></div>
+      <div>Cookies Work: <span id="cookieStatus">...</span></div>
+      <div>Last Save: <span id="saveStatus">waiting...</span></div>
+      <div>Save Count: <span id="saveCount">0</span></div>
+    </div>
+    
     <div class="gm4html5_div_class" id="gm4html5_div_id">
       <img src="html5game/splash.png" id="GM4HTML5_loadingscreen" alt="GameMaker:HTML5 loading screen" style="display: none" />
       <canvas id="canvas" width="960" height="540">
@@ -74,6 +106,16 @@
     
     <script>
     const API_KEY = '$2a$10$yAVzmS4UIb1JHWmUxdLDfe9MvR9J6MfFGz108u2ZQEz3SUh/PA43G';
+    let saveCounter = 0;
+    
+    // Update debug display
+    function updateDebug(field, value, className = '') {
+      const el = document.getElementById(field);
+      if (el) {
+        el.textContent = value;
+        el.className = className;
+      }
+    }
     
     // Cookie helpers
     function setCookie(name, value, days) {
@@ -99,31 +141,41 @@
     if (!playerId) {
       playerId = 'player_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
       setCookie('retroBowlPlayerId', playerId, 365);
-      console.log('New player created:', playerId);
     }
+    
+    // Check if cookies work
+    setTimeout(() => {
+      const testCookie = getCookie('retroBowlPlayerId');
+      if (testCookie) {
+        updateDebug('cookieStatus', '✓ YES', 'status-ok');
+      } else {
+        updateDebug('cookieStatus', '✗ BLOCKED', 'status-error');
+      }
+    }, 100);
+    
+    // Update initial status
+    updateDebug('playerIdStatus', playerId ? playerId.substring(0, 15) + '...' : 'NONE', playerId ? 'status-ok' : 'status-error');
+    updateDebug('binIdStatus', binId ? binId.substring(0, 15) + '...' : 'none yet', binId ? 'status-ok' : 'status-waiting');
     
     // Load save from cloud BEFORE game initializes
     (async function() {
       if (binId) {
         try {
-          console.log('Loading save from cloud...');
+          updateDebug('saveStatus', 'Loading...', 'status-waiting');
           const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
             headers: { 'X-Master-Key': API_KEY }
           });
           const data = await response.json();
           
           if (data.record) {
-            // Clear existing localStorage first
             localStorage.clear();
-            
-            // Load save data
             for (const key in data.record) {
               localStorage.setItem(key, data.record[key]);
             }
-            console.log('✓ Save loaded from cloud!', Object.keys(data.record).length, 'keys');
+            updateDebug('saveStatus', '✓ Loaded ' + Object.keys(data.record).length + ' keys', 'status-ok');
           }
         } catch(e) {
-          console.log('Error loading save:', e);
+          updateDebug('saveStatus', '✗ Load failed: ' + e.message, 'status-error');
         }
       }
       
@@ -143,6 +195,8 @@
       
       if (Object.keys(saveData).length > 0) {
         try {
+          updateDebug('saveStatus', 'Saving...', 'status-waiting');
+          
           const url = binId 
             ? `https://api.jsonbin.io/v3/b/${binId}`
             : 'https://api.jsonbin.io/v3/b';
@@ -158,16 +212,21 @@
           
           const data = await response.json();
           
-          if (!binId && data.metadata.id) {
+          if (!binId && data.metadata && data.metadata.id) {
             binId = data.metadata.id;
             setCookie('retroBowlBinId', binId, 365);
-            console.log('✓ New save created:', binId);
+            updateDebug('binIdStatus', binId.substring(0, 15) + '...', 'status-ok');
           }
           
-          console.log('✓ Saved to cloud!');
+          saveCounter++;
+          updateDebug('saveStatus', '✓ Saved', 'status-ok');
+          updateDebug('saveCount', saveCounter);
+          
         } catch(e) {
-          console.log('Save failed:', e);
+          updateDebug('saveStatus', '✗ Failed: ' + e.message, 'status-error');
         }
+      } else {
+        updateDebug('saveStatus', 'No data to save', 'status-waiting');
       }
     }, 30000);
     </script>
