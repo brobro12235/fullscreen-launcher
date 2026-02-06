@@ -170,9 +170,26 @@
     <script src="/html/settings/js/index.js"></script>
     
     <script>
+    // Cookie helpers to persist across about:blank sessions
+    function setCookie(name, value, days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      document.cookie = name + "=" + value + ";expires=" + date.toUTCString() + ";path=/;SameSite=None;Secure";
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const cookies = document.cookie.split(';');
+      for(let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i].trim();
+        if (cookie.indexOf(nameEQ) === 0) return cookie.substring(nameEQ.length);
+      }
+      return null;
+    }
+    
     let username = '';
     let password = '';
-    let pasteUrl = '';
+    let pasteUrl = getCookie('retroBowlPasteUrl') || '';
     let gameStarted = false;
     
     // Hash password for security
@@ -248,33 +265,39 @@
       try {
         updateSaveStatus('Loading save...', '#ff0');
         
-        // Create unique save ID from username + password
         const passHash = await hashPassword(password);
-        const saveId = await hashPassword(username + passHash);
-        pasteUrl = 'rb_' + saveId.substring(0, 16);
         
-        // Try to load existing save
-        try {
-          const response = await fetch(`https://dpaste.com/${pasteUrl}.txt`);
-          if (response.ok) {
-            const text = await response.text();
-            const data = JSON.parse(text);
-            
-            // Verify password matches
-            if (data.passwordHash === passHash) {
-              // Load the save
-              for (const key in data.saveData) {
-                localStorage.setItem(key, data.saveData[key]);
-              }
+        // Try to load from stored paste URL
+        if (pasteUrl) {
+          try {
+            const response = await fetch(pasteUrl + '.txt');
+            if (response.ok) {
+              const text = await response.text();
+              const data = JSON.parse(text);
               
-              updateSaveStatus('Save loaded!', '#0f0');
-              document.getElementById('loginScreen').style.display = 'none';
-              startGame();
-              return;
+              // Verify password matches
+              if (data.passwordHash === passHash && data.username === username) {
+                // Load the save
+                for (const key in data.saveData) {
+                  localStorage.setItem(key, data.saveData[key]);
+                }
+                
+                updateSaveStatus('Save loaded!', '#0f0');
+                document.getElementById('loginScreen').style.display = 'none';
+                startGame();
+                return;
+              } else {
+                // Wrong password or username
+                updateSaveStatus('Wrong password', '#f00');
+                setTimeout(() => {
+                  location.reload();
+                }, 2000);
+                return;
+              }
             }
+          } catch(e) {
+            console.log('Error loading save:', e);
           }
-        } catch(e) {
-          console.log('No existing save found');
         }
         
         // No existing save - start new game
@@ -341,9 +364,11 @@
           
           if (response.ok) {
             const responseUrl = await response.text();
-            console.log('Saved to:', responseUrl);
+            pasteUrl = responseUrl.trim();
+            setCookie('retroBowlPasteUrl', pasteUrl, 365);
+            console.log('Saved to:', pasteUrl);
             
-            updateSaveStatus('✓ Saved', '#0f0');
+            updateSaveStatus('✓ Saved to cloud', '#0f0');
             setTimeout(() => {
               updateSaveStatus('User: ' + username, '#0f0');
             }, 2000);
